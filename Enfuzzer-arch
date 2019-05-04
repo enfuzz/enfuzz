@@ -1,0 +1,613 @@
+#!/bin/bash
+#set -x
+set -eu
+AFL_PREFIX=/opt/enfuzzer
+TOOL_BIN=/opt/enfuzzer/bin
+
+
+log-debug() {
+    echo -e "\e[94m[*]\e[0m $*"
+}
+
+log-info() {
+    echo -e "\e[92m[+]\e[0m $*"
+}
+ 
+log-error() {
+    echo -e "\e[91m[!]\e[0m $*"
+    exit 1
+}
+
+
+print-args() {
+    [[ "$#" -le 2 ]] && return
+    log-debug "$1"
+    for arg in "${@:2}"; do
+        log-debug "\t$arg"
+    done
+}
+
+run-radamsa() {
+	sleep 10
+	echo "run radamsa!"
+	if [ -d "out" ]; then
+		rm -rf out/radamsa
+  		mkdir out/radamsa
+		cp $TOOL_BIN/radamsa.sh .
+		timeout $1 ./radamsa.sh &
+	fi
+}
+
+run-libfuzzer() {
+	sleep 10
+	echo "run libfuzzer"
+	if [ -d "out" ]; then
+		rm -rf out/libfuzzer
+                mkdir out/libfuzzer
+                cp $TOOL_BIN/libfuzzer.sh .
+                timeout $1 ./libfuzzer.sh &
+		cp $TOOL_BIN/libsync.sh .
+		timeout $1 ./libsync.sh &
+        fi
+}
+
+dyn-fuzz() {
+    
+	time=86400
+	
+	while getopts "t:alfirI" arg #选项后面的冒号表示该选项需要参数
+	do
+        case $arg in
+	    t)
+		echo "timeout: $OPTARG!"
+                let "time=$OPTARG"
+                ;;
+
+            a)
+                echo "afl begin!" 
+                ;;
+            I)
+		echo "intefuzz begin!" 
+		;;
+            l)
+                echo "libfuzzer begin!"
+		run-libfuzzer "$time" &
+                ;;
+            f)
+                echo "aflfast begin!"
+                ;;
+	    i)
+                echo "fairfuzz begin!"
+                ;;
+	    r)
+                echo "radamsa begin!"
+		run-radamsa "$time" &
+                ;;
+            ?) 
+		echo "unkonw argument"
+		exit 1
+		;;
+        esac
+	done
+
+	
+	# local args=("$AFL_PREFIX/bin/afl-fuzz" "-m 20981520 -t 1000" "$@")
+	# print-args "AFL cmdline:" "${args[@]}"
+	# "${args[@]}"
+#	tmux new -s enfuzzer -d
+
+#	tmux send -t "enfuzzer" "timeout $time $AFL_PREFIX/bin/afl-fuzz -i seed -o out -m 20981520 -t 1000  -M master ./aflapp" Enter
+
+#	tmux split-window -h -t "enfuzzer"
+#	tmux send -t "enfuzzer" "timeout $time $AFL_PREFIX/bin/aflfast-fuzz -i seed -o out  -m 20981520 -t 1000 -S fuzzer1 ./aflapp" Enter
+	# 默认上下分屏
+#	tmux split-window -t "enfuzzer"
+#	tmux select-pane -L
+#	tmux split-window -t "enfuzzer"
+#	tmux send -t "enfuzzer" "timeout $time $AFL_PREFIX/bin/fairfuzz -i seed -o out -m 20981520 -t 1000  -S fuzzer2 ./aflapp" Enter
+#	tmux select-pane -R
+#	tmux send -t "enfuzzer" "timeout $time $AFL_PREFIX/bin/afl-go -i seed -o out  -m 20981520 -t 1000  -S fuzzer3 ./aflapp" Enter
+
+#	tmux attach -t enfuzzer
+ 
+	if [ -f "ARGS" ]; then
+		echo "ARGS"
+        	ARGS=$(cat ARGS)
+		local args=("$AFL_PREFIX/bin/afl-fuzz" "-m 20981520" "-t 1000" "-i" "seed" "-o" "out" "-M" "master" "./aflapp" "$ARGS")
+	    print-args "AFL cmdline:" "${args[@]}"
+        nohup timeout $time "${args[@]}" > master.log  &
+        local args=("$AFL_PREFIX/bin/aflfast-fuzz" "-m 20981520" "-t 1000" "-i" "seed" "-o" "out" "-S" "fuzzer1" "./aflapp" "$ARGS")
+        print-args "AFL cmdline:" "${args[@]}"
+        nohup timeout $time "${args[@]}" > fuzzer1.log  &
+        local args=("$AFL_PREFIX/bin/fairfuzz" "-m 20981520" "-t 1000" "-i" "seed" "-o" "out" "-S" "fuzzer2" "./aflapp" "$ARGS")
+        print-args "AFL cmdline:" "${args[@]}"
+        nohup timeout $time "${args[@]}" > fuzzer2.log  &
+        local args=("$AFL_PREFIX/bin/afl-go" "-m 20981520" "-t 1000" "-i" "seed" "-o" "out" "-S" "fuzzer3" "./aflapp" "$ARGS")
+        print-args "AFL cmdline:" "${args[@]}"
+        nohup timeout $time "${args[@]}" > fuzzer3.log  &
+	    local args=("$AFL_PREFIX/bin/inte-fuzz" "-m 20981520" "-t 1000" "-i" "seed" "-o" "out" "-S" "fuzzer4" "./inteapp" "$ARGS")
+	    print-args "AFL cmdline:" "${args[@]}"
+	    nohup timeout $time "${args[@]}" > fuzzer4.log  
+    else
+		local args=("$AFL_PREFIX/bin/afl-fuzz" "-m 20981520" "-t 1000" "-i" "seed" "-o" "out" "-M" "master" "./aflapp")
+	    print-args "AFL cmdline:" "${args[@]}"
+        nohup timeout $time "${args[@]}" > master.log  &
+        local args=("$AFL_PREFIX/bin/aflfast-fuzz" "-m 20981520" "-t 1000" "-i" "seed" "-o" "out" "-S" "fuzzer1" "./aflapp")
+        print-args "AFL cmdline:" "${args[@]}"
+        nohup timeout $time "${args[@]}" > fuzzer1.log  &
+        local args=("$AFL_PREFIX/bin/fairfuzz" "-m 20981520" "-t 1000" "-i" "seed" "-o" "out" "-S" "fuzzer2" "./aflapp")
+        print-args "AFL cmdline:" "${args[@]}"
+        nohup timeout $time "${args[@]}" > fuzzer2.log  &
+        local args=("$AFL_PREFIX/bin/afl-go" "-m 20981520" "-t 1000" "-i" "seed" "-o" "out" "-S" "fuzzer3" "./aflapp")
+        print-args "AFL cmdline:" "${args[@]}"
+        nohup timeout $time "${args[@]}" > fuzzer3.log  &
+	    local args=("$AFL_PREFIX/bin/inte-fuzz" "-m 20981520" "-t 1000" "-i" "seed" "-o" "out" "-S" "fuzzer4" "./inteapp")
+	    print-args "AFL cmdline:" "${args[@]}"
+	    nohup timeout $time "${args[@]}" > fuzzer4.log  
+	fi
+   
+}
+
+build-IntefuzzTool() {
+        work_path=$(pwd)
+        echo $work_path
+        cd $TOOL_BIN/intefuzz
+        make clean
+        make && make -C llvm_mode LLVM_CONFIG=llvm-config CC=clang CXX=g++
+#        cd ..
+#        cp intefuzz/afl-clang-fast* .
+#        cp intefuzz/afl-llvm-* .
+        cd $work_path
+}
+
+build-intefuzzdriver() {
+
+        ar r driver.a $TOOL_BIN/afl-driver-64.o
+
+}
+
+build-intefuzz() {
+        rm -rf code_intefuzz
+        mkdir code_intefuzz
+        cp $2 code_intefuzz/$2
+        cd code_intefuzz
+
+        SRC=${2%%.*}
+
+        if [[ "$1" == "-zip" ]]; then
+                unzip $2
+        elif [[ "$1" == "-gz" ]]; then
+                tar -xvf $2
+        else
+                echo "unknow arg"
+                exit 1
+        fi
+
+        rm $2
+
+#       export CC=${CC:-"$TOOL_BIN/afl-clang-fast"}
+#       export CXX=${CXX:-"$TOOL_BIN/afl-clang-fast++"}
+
+        export CC="$TOOL_BIN/intefuzz/afl-clang-fast"
+        export CXX="$TOOL_BIN/intefuzz/afl-clang-fast++"
+
+        FSANITIZE_FUZZER_FLAGS="-fno-omit-frame-pointer -g -fsanitize=address"
+#       export CFLAGS=${CFLAGS:-$FSANITIZE_FUZZER_FLAGS}
+#       export CXXFLAGS=${CXXFLAGS:-$FSANITIZE_FUZZER_FLAGS}
+
+        export CFLAGS="$FSANITIZE_FUZZER_FLAGS"
+        export CXXFLAGS="$FSANITIZE_FUZZER_FLAGS"
+
+        export EXTRALIBS="driver.a"
+
+        build-intefuzzdriver
+
+        $SRC/fuzzbuild
+
+        cd ..
+        cp code_intefuzz/app build/inteapp
+}
+
+build-tool() {
+	work_path=$(pwd)
+	echo $work_path
+	cd $TOOL_BIN/afl
+	make clean
+	make && make -C llvm_mode LLVM_CONFIG=llvm-config CC=clang CXX=g++
+	cd ..
+	cp afl/afl-clang-fast* .
+	cp afl/afl-llvm-* .
+	cd $work_path
+}
+
+build-puredriver() {
+        $CXX $CXXFLAGS -std=c++11 -c $TOOL_BIN/libfuzzer/afl/afl_driver.cpp -I $TOOL_BIN/libfuzzer/
+        ar r driver.a afl_driver.o
+
+#         ar r driver.a $TOOL_BIN/afl-driver-64.o
+}
+
+
+build-pure() {
+	rm -rf code_pure
+	mkdir code_pure
+	cp $2 code_pure/$2
+	cd code_pure
+	
+	SRC=${2%%.*}
+	
+	if [[ "$1" == "-zip" ]]; then
+		unzip $2
+	elif [[ "$1" == "-gz" ]]; then
+		tar -xvf $2
+	else
+		echo "unknow arg"
+		exit 1
+	fi
+	
+	rm $2
+	
+	export CC="$TOOL_BIN/afl-clang-fast"
+    	export CXX="$TOOL_BIN/afl-clang-fast++"
+	
+	FSANITIZE_FUZZER_FLAGS=""
+	
+	export CFLAGS="$FSANITIZE_FUZZER_FLAGS"
+	export CXXFLAGS="$FSANITIZE_FUZZER_FLAGS"
+
+        export EXTRALIBS="driver.a"
+
+	build-puredriver
+	
+	$SRC/fuzzbuild
+	
+	cd ..
+	cp code_pure/app build/pureapp
+}
+
+build-afldriver() {
+	$CXX $CXXFLAGS -std=c++11 -c $TOOL_BIN/libfuzzer/afl/afl_driver.cpp -I $TOOL_BIN/libfuzzer/
+	ar r driver.a afl_driver.o
+
+	ar r driver.a $TOOL_BIN/afl-driver-64.o	 
+
+#	$CC $CFLAGS -c -w  /opt/enfuzzer/bin/afl/llvm_mode/afl-llvm-rt.o.c
+#  	$CXX $CXXFLAGS -std=c++11 -c /opt/enfuzzer/bin/Fuzzer/afl/afl_driver.cpp -I /opt/enfuzzer/bin/Fuzzer/
+#  	ar r driver.a  afl_driver.o afl-llvm-rt.o.o
+}
+
+build-afl() {
+	rm -rf code_afl
+	mkdir code_afl
+	cp $2 code_afl/$2
+	cd code_afl
+	
+	SRC=${2%%.*}
+	
+	if [[ "$1" == "-zip" ]]; then
+		unzip $2
+	elif [[ "$1" == "-gz" ]]; then
+		tar -xvf $2
+	else
+		echo "unknow arg"
+		exit 1
+	fi
+	
+	rm $2
+	
+#	export CC=${CC:-"$TOOL_BIN/afl-clang-fast"}
+#	export CXX=${CXX:-"$TOOL_BIN/afl-clang-fast++"}
+	
+	export CC="$TOOL_BIN/afl-clang-fast"
+	export CXX="$TOOL_BIN/afl-clang-fast++"
+	
+	FSANITIZE_FUZZER_FLAGS="-fno-omit-frame-pointer -g -fsanitize=address"
+#	export CFLAGS=${CFLAGS:-$FSANITIZE_FUZZER_FLAGS}
+#	export CXXFLAGS=${CXXFLAGS:-$FSANITIZE_FUZZER_FLAGS}
+	
+	export CFLAGS="$FSANITIZE_FUZZER_FLAGS"
+	export CXXFLAGS="$FSANITIZE_FUZZER_FLAGS"
+
+        export EXTRALIBS="driver.a"
+
+	build-afldriver
+	
+	$SRC/fuzzbuild
+	
+	cd ..
+	cp code_afl/app build/aflapp
+	
+	if [ -f "code_afl/ARGS" ]; then
+		cp code_afl/ARGS build/ARGS
+	fi
+}
+
+build-libdriver() {
+	$TOOL_BIN/libfuzzer/build.sh
+	mv libFuzzer.a driver.a
+}
+
+build-lib() {
+	rm -rf code_lib
+	mkdir code_lib
+	cp $2 code_lib/$2
+	cd code_lib
+	
+	SRC=${2%%.*}
+	
+	if [[ "$1" == "-zip" ]]; then
+		unzip $2
+	elif [[ "$1" == "-gz" ]]; then
+		tar -xvf $2
+	else
+		echo "unknow arg"
+		exit 1
+	fi
+	
+	rm $2
+
+#	export CC=${CC:-"clang"}
+#	export CXX=${CXX:-"clang++"}
+
+	export CC="clang"
+    	export CXX="clang++"
+	
+	FSANITIZE_FUZZER_FLAGS="-fno-omit-frame-pointer -g -fsanitize=address,fuzzer-no-link"
+#	export CFLAGS=${CFLAGS:-$FSANITIZE_FUZZER_FLAGS}
+#	export CXXFLAGS=${CXXFLAGS:-$FSANITIZE_FUZZER_FLAGS}
+
+        export CFLAGS="$FSANITIZE_FUZZER_FLAGS"
+        export CXXFLAGS="$FSANITIZE_FUZZER_FLAGS"
+
+        export EXTRALIBS="driver.a"
+
+	build-libdriver
+	
+	$SRC/fuzzbuild
+	
+	cd ..
+	cp code_lib/app build/libapp
+}
+
+seed() {
+	rm -rf build/seed
+	mkdir build/seed
+	
+	if [[ "$1" == "-zip" ]]; then
+		unzip $2
+		cp -r ${2%%.*}/* build/seed
+	elif [[ "$1" == "-gz" ]]; then
+		tar -xvf $2
+		cp -r ${2%%.*}/* build/seed
+	else
+		echo "unknow arg"
+		exit 1
+	fi
+	
+	rm -rf ${2%%.*}
+	
+}
+
+file() {
+	name="test-enfuzz"
+	file="/opt/enfuzzer"
+	dest="/"
+
+	while getopts "n:f:d:" arg 
+        do
+        case $arg in
+            n)
+                echo "name: $OPTARG!"
+                name=$OPTARG
+                ;;
+
+            f)
+                echo "file: $OPTARG!"
+                file=$OPTARG
+                ;;
+            d)
+                echo "destination: $OPTARG!"
+                dest=$OPTARG
+                ;; 
+            ?)
+                echo "unkonw argument"
+                exit 1
+                ;;
+        esac
+        done
+
+	echo "cp -r $file /var/lib/lxc/$name/roots$dest"
+
+	cp -r "$file" "/var/lib/lxc/$name/rootfs$dest"
+
+}
+
+create-lxc() {
+
+	echo $@	
+
+	name="test-enfuzz"
+	dist="ubuntu"
+	release="xenial"
+	arch="i386"
+
+	while getopts "n:d:r:a:" arg 
+        do
+        case $arg in
+            n)
+                echo "name: $OPTARG!"
+                name=$OPTARG
+                ;;
+
+            d)
+                echo "Distribution: $OPTARG!"
+		dist=$OPTARG
+                ;;
+            r)
+                echo "Release: $OPTARG!"
+		release=$OPTARG
+                ;; 
+            a)
+                echo "Arch: $OPTARG!"
+		arch=$OPTARG
+                ;;
+            ?)
+                echo "unkonw argument"
+                exit 1
+                ;;
+        esac
+        done
+	
+	echo "lxc-create -t download -n $name -- -d $dist -r $release -a $arch"
+	lxc-create -t download -n $name -- -d $dist -r $release -a $arch
+	lxc-start -n $name
+#	lxc-attach -n $name -- mkdir /fuzz
+	
+#	echo "Enfuzzer file -n $name -f /etc/apt/sources.list -d /etc/apt/sources.list"
+#	Enfuzzer file -n $name -f /etc/apt/sources.list -d /etc/apt/sources.list
+
+	echo "Enfuzzer file -n $name -f /opt/enfuzzer -d /opt"	
+	Enfuzzer file -n $name -f /opt/enfuzzer -d /opt
+
+#	echo "lxc-attach -n $name -- apt-get install -y clang-6.0"
+#	lxc-attach -n $name -- apt-get install -y clang-6.0
+	
+#	echo "lxc-attach -n $name -- apt-get install -y make"
+#	lxc-attach -n $name -- apt-get install -y make
+
+	rootfs_path=/var/lib/lxc/$name/rootfs	
+
+	if [[ $dist=="ubuntu" ]]; then
+		echo "ubuntu"
+		chroot $rootfs_path apt-get update
+		chroot $rootfs_path apt-get install -y make
+		chroot $rootfs_path apt-get install -y clang-6.0
+	elif [[ $dist=="fedora" ]]; then
+		echo "fedora"
+	elif [[ $dist=="debian" ]]; then
+		echo "debian"
+	elif [[ $dist=="centos" ]]; then
+		echo "centos"
+	elif [[ $dist=="alpine" ]]; then
+		echo "alpine"
+	fi
+}
+
+close-lxc() {
+	name="test-enfuzz"
+	while getopts "n:" arg 
+        do
+        case $arg in
+            n)  
+                echo "name: $OPTARG!"
+                name=$OPTARG
+                ;;
+            ?)  
+                echo "unkonw argument"
+                exit 1
+                ;;
+        esac
+        done
+
+	lxc-stop -n $name
+}
+
+destroy-lxc() {
+	name="test-enfuzz"
+        while getopts "n:" arg 
+        do
+        case $arg in
+            n)
+                echo "name: $OPTARG!"
+                name=$OPTARG
+                ;;
+            ?)
+                echo "unkonw argument"
+                exit 1
+                ;;
+        esac
+        done
+
+        lxc-destroy -n $name
+
+}
+
+execute-lxc() {
+	name="test-enfuzz"
+	script="ls"
+	while getopts "n:i:" arg 
+        do
+        case $arg in
+            n)
+                echo "name: $OPTARG!"
+                name=$OPTARG
+                ;;
+	    i)
+		echo "script: $OPTARG!"
+		script=$OPTARG
+		;;
+            ?)
+                echo "unkonw argument"
+                exit 1
+                ;;
+        esac
+        done
+
+        lxc-attach -n $name -- $script
+}
+
+usage() {
+    local prog="$(basename "$0")"
+    log-error "Usage\n" \
+              "    $prog run -a(AFL), -l(libfuzzer), -ffast), -i(fair), -r(radamsa)，-t time(s)\n"\
+              "    $prog build -zip XXX.zip or –gz XXX.tar.gz\n"\
+              "    $prog seed -zip XXX.zip or –gz XXX.tar.gz\n"\
+              "    $prog env -n name –d Distribution-r RELEASE -a ARCH\n"\
+              "    $prog file -n name -f file -d /\n"\
+              "    $prog close -n name\n"\
+              "    $prog destroy -n name\n"\
+              "    $prog execute -n name -i \"shell script\"\n"\
+              "    $prog copy -n name -d Distribution\n"
+}
+
+
+[[ "$#" == 0 ]] && usage
+
+ if [[ "$1" == "run" ]]; then
+	echo "enfuzzer run"
+	cd build
+#	rm -rf out
+	dyn-fuzz "${@:2}"
+	cd ..
+elif [[ "$1" == "build" ]]; then
+	echo "enfuzzer build"
+	rm -rf build
+        mkdir build
+        build-IntefuzzTool
+        build-tool
+        build-intefuzz "${@:2}"
+        build-pure "${@:2}"
+        build-afl "${@:2}"
+        build-lib "${@:2}"	
+elif [[ "$1" == "seed" ]]; then
+	echo "enfuzzer seed"
+	seed "${@:2}"
+elif [[ "$1" == "env" ]]; then
+	echo "enfuzzer env"
+	create-lxc "${@:2}"
+elif [[ "$1" == "file" ]]; then
+	echo "enfuzzer file"
+	file "${@:2}"
+elif [[ "$1" == "close" ]]; then
+	echo "enfuzzer close"
+	close-lxc "${@:2}"
+elif [[ "$1" == "destroy" ]]; then
+	echo "enfuzzer destroy"
+	destroy-lxc "${@:2}"
+elif [[ "$1" == "execute" ]]; then
+	echo "enfuzzer execute"
+	execute-lxc "${@:2}"
+else
+	echo "unknow arg"
+	exit 1
+fi

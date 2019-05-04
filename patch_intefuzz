@@ -1,0 +1,59 @@
+#!/bin/bash
+
+VPATH=/var/lib/lxc
+
+#rm -rf $VPATH/archlinux/rootfs/opt/enfuzzer/bin/intefuzz
+#cp -r /opt/enfuzzer/bin/intefuzz  $VPATH/archlinux/rootfs/opt/enfuzzer/bin/intefuzz
+#cp  /opt/enfuzzer/bin/inte-fuzz  $VPATH/archlinux/rootfs/opt/enfuzzer/bin/inte-fuzz
+#rm $VPATH/archlinux/rootfs/opt/enfuzzer/bin/Enfuzzer
+cp  /opt/enfuzzer/Enfuzzer-arch  $VPATH/archlinux/rootfs/opt/enfuzzer/Enfuzzer
+
+
+#rm -rf $VPATH/ubuntu-xenial/rootfs/opt/enfuzzer/bin/intefuzz
+#cp -r /opt/enfuzzer/bin/intefuzz  $VPATH/ubuntu-xenial/rootfs/opt/enfuzzer/bin/intefuzz
+#cp  /opt/enfuzzer/bin/inte-fuzz  $VPATH/ubuntu-xenial/rootfs/opt/enfuzzer/bin/inte-fuzz
+#rm $VPATH/ubuntu-xenial/rootfs/opt/enfuzzer/bin/Enfuzzer
+cp  /opt/enfuzzer/Enfuzzer  $VPATH/ubuntu-xenial/rootfs/opt/enfuzzer/Enfuzzer
+
+
+#rm -rf $VPATH/centos-7/rootfs/opt/enfuzzer/bin/intefuzz
+#cp -r /opt/enfuzzer/bin/intefuzz  $VPATH/centos-7/rootfs/opt/enfuzzer/bin/intefuzz
+#cp  /opt/enfuzzer/bin/inte-fuzz  $VPATH/centos-7/rootfs/opt/enfuzzer/bin/inte-fuzz
+#rm $VPATH/centos-7/rootfs/opt/enfuzzer/bin/Enfuzzer
+cp  /opt/enfuzzer/Enfuzzer-Clang  $VPATH/centos-7/rootfs/opt/enfuzzer/Enfuzzer
+
+#rm -rf $VPATH/debian-8/rootfs/opt/enfuzzer/bin/intefuzz
+#cp -r /opt/enfuzzer/bin/intefuzz  $VPATH/debian-8/rootfs/opt/enfuzzer/bin/intefuzz
+#cp  /opt/enfuzzer/bin/inte-fuzz  $VPATH/debian-8/rootfs/opt/enfuzzer/bin/inte-fuzz
+#rm $VPATH/debian-8/rootfs/opt/enfuzzer/bin/Enfuzzer
+cp  /opt/enfuzzer/Enfuzzer-Clang  $VPATH/debian-8/rootfs/opt/enfuzzer/Enfuzzer
+
+#rm -rf $VPATH/fedora-27/rootfs/opt/enfuzzer/bin/intefuzz
+#cp -r /opt/enfuzzer/bin/intefuzz  $VPATH/fedora-27/rootfs/opt/enfuzzer/bin/intefuzz
+#cp  /opt/enfuzzer/bin/inte-fuzz  $VPATH/fedora-27/rootfs/opt/enfuzzer/bin/inte-fuzz
+#rm $VPATH/fedora-27/rootfs/opt/enfuzzer/bin/Enfuzzer
+cp  /opt/enfuzzer/Enfuzzer-Clang  $VPATH/fedora-27/rootfs/opt/enfuzzer/Enfuzzer
+
+#rm -rf $VPATH/gentoo/rootfs/opt/enfuzzer/bin/intefuzz
+#cp -r /opt/enfuzzer/bin/intefuzz  $VPATH/gentoo/rootfs/opt/enfuzzer/bin/intefuzz
+#cp  /opt/enfuzzer/bin/inte-fuzz  $VPATH/gentoo/rootfs/opt/enfuzzer/bin/inte-fuzz
+#rm $VPATH/gentoo/rootfs/opt/enfuzzer/bin/Enfuzzer
+cp  /opt/enfuzzer/Enfuzzer-Clang  $VPATH/gentoo/rootfs/opt/enfuzzer/Enfuzzer
+
+#rm -rf $VPATH/opensuse/rootfs/opt/enfuzzer/bin/intefuzz
+#cp -r /opt/enfuzzer/bin/intefuzz  $VPATH/opensuse/rootfs/opt/enfuzzer/bin/intefuzz
+#cp  /opt/enfuzzer/bin/inte-fuzz  $VPATH/opensuse/rootfs/opt/enfuzzer/bin/inte-fuzz
+#rm $VPATH/opensuse/rootfs/opt/enfuzzer/bin/Enfuzzer
+cp  /opt/enfuzzer/Enfuzzer-Clang  $VPATH/opensuse/rootfs/opt/enfuzzer/Enfuzzer
+
+#rm -rf $VPATH/opensuse-15/rootfs/opt/enfuzzer/bin/intefuzz
+#cp -r /opt/enfuzzer/bin/intefuzz  $VPATH/opensuse-15/rootfs/opt/enfuzzer/bin/intefuzz
+#cp  /opt/enfuzzer/bin/inte-fuzz  $VPATH/opensuse-15/rootfs/opt/enfuzzer/bin/inte-fuzz
+#rm $VPATH/opensuse-15/rootfs/opt/enfuzzer/bin/Enfuzzer
+cp  /opt/enfuzzer/Enfuzzer-Clang  $VPATH/opensuse-15/rootfs/opt/enfuzzer/Enfuzzer
+
+#rm -rf $VPATH/ubuntu-14/rootfs/opt/enfuzzer/bin/intefuzz
+#cp -r /opt/enfuzzer/bin/intefuzz  $VPATH/ubuntu-14/rootfs/opt/enfuzzer/bin/intefuzz
+#cp  /opt/enfuzzer/bin/inte-fuzz  $VPATH/ubuntu-14/rootfs/opt/enfuzzer/bin/inte-fuzz
+#rm $VPATH/ubuntu-14/rootfs/opt/enfuzzer/bin/Enfuzzer
+cp  /opt/enfuzzer/Enfuzzer-Clang  $VPATH/ubuntu-14/rootfs/opt/enfuzzer/Enfuzzer

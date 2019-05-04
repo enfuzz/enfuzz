@@ -1,0 +1,4 @@
+#!/bin/bash
+
+mkdir /opt/enfuzzer
+cp -r * /opt/enfuzzer/
